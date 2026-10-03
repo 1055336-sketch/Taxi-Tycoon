@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taxi Tycoon 🚕</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #111827;
+        color: white;
+    }
+
+    .game {
+        max-width: 900px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 45px;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #aaa;
+        margin-bottom: 25px;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat {
+        background: #1f2937;
+        padding: 18px;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 22px;
+        border: 1px solid #374151;
+    }
+
+    .map {
+        height: 300px;
+        background: #374151;
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 20px;
+        border: 3px solid #4b5563;
+    }
+
+    .road1 {
+        position: absolute;
+        width: 100%;
+        height: 70px;
+        background: #202020;
+        top: 110px;
+    }
+
+    .road2 {
+        position: absolute;
+        height: 100%;
+        width: 70px;
+        background: #202020;
+        left: 410px;
+    }
+
+    .line1 {
+        position: absolute;
+        width: 100%;
+        height: 4px;
+        background: #facc15;
+        top: 143px;
+    }
+
+    .line2 {
+        position: absolute;
+        height: 100%;
+        width: 4px;
+        background: #facc15;
+        left: 443px;
+    }
+
+    .taxi {
+        position: absolute;
+        font-size: 42px;
+        transition: 0.5s;
+        z-index: 5;
+    }
+
+    .passenger-marker {
+        position: absolute;
+        font-size: 35px;
+        z-index: 4;
+    }
+
+    .building {
+        position: absolute;
+        font-size: 45px;
+    }
+
+    .passenger-box {
+        background: #1f2937;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+        border: 1px solid #374151;
+    }
+
+    .passenger-box h2 {
+        margin: 5px;
+        font-size: 28px;
+    }
+
+    .passenger-box p {
+        color: #ccc;
+    }
+
+    .buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    button {
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        background: #facc15;
+        color: #111;
+        transition: 0.15s;
+    }
+
+    button:hover {
+        transform: scale(1.03);
+        filter: brightness(1.1);
+    }
+
+    button:active {
+        transform: scale(0.98);
+    }
+
+    .message {
+        background: #1f2937;
+        padding: 18px;
+        margin-top: 20px;
+        border-radius: 15px;
+        text-align: center;
+        min-height: 55px;
+        font-size: 18px;
+    }
+
+    .upgrades {
+        margin-top: 20px;
+        background: #1f2937;
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    .upgrades h2 {
+        margin-top: 0;
+    }
+
+    .upgrade-info {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        color: #ddd;
+    }
+
+    @media (max-width: 600px) {
+        .stats {
+            grid-template-columns: 1fr;
+        }
+
+        .buttons {
+            grid-template-columns: 1fr;
+        }
+
+        .road2 {
+            left: 50%;
+        }
+
+        .line2 {
+            left: calc(50% + 33px);
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <h1>🚕 Taxi Tycoon</h1>
+    <div class="subtitle">
+        Pick up passengers. Make money. Build your taxi empire.
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+
+        <div class="stat">
+            💰 $<span id="money">100</span>
+        </div>
+
+        <div class="stat">
+            ⭐ <span id="rating">1.0</span>
+        </div>
+
+        <div class="stat">
+            ⛽ <span id="fuel">100</span>%
+        </div>
+
+    </div>
+
+
+    <!-- MAP -->
+    <div class="map" id="map">
+
+        <div class="road1"></div>
+        <div class="road2"></div>
+
+        <div class="line1"></div>
+        <div class="line2"></div>
+
+        <div class="building" style="top:20px; left:30px;">🏠</div>
+        <div class="building" style="top:20px; right:30px;">🏢</div>
+        <div class="building" style="bottom:20px; left:30px;">🛍️</div>
+        <div class="building" style="bottom:20px; right:30px;">✈️</div>
+
+        <div class="taxi" id="taxi">
+            🚕
+        </div>
+
+        <div class="passenger-marker" id="marker">
+            ❓
+        </div>
+
+    </div>
+
+
+    <!-- PASSENGER -->
+    <div class="passenger-box">
+
+        <h2 id="passenger">
+            No passenger
+        </h2>
+
+        <p id="details">
+            Click "Find Passenger" to get a ride.
+        </p>
+
+    </div>
+
+
+    <!-- BUTTONS -->
+    <div class="buttons">
+
+        <button onclick="findPassenger()">
+            🔎 Find Passenger
+        </button>
+
+        <button onclick="pickUpPassenger()">
+            🚕 Pick Up Passenger
+        </button>
+
+        <button onclick="drivePassenger()">
+            🛣️ Drive To Destination
+        </button>
+
+        <button onclick="refuel()">
+            ⛽ Refuel ($20)
+        </button>
+
+        <button onclick="upgradeTaxi()">
+            🔧 Upgrade Taxi ($100)
+        </button>
+
+        <button onclick="resetGame()">
+            🔄 Reset Game
+        </button>
+
+    </div>
+
+
+    <!-- MESSAGE -->
+    <div class="message" id="message">
+        Welcome to Taxi Tycoon! 🚕
+    </div>
+
+
+    <!-- UPGRADES -->
+    <div class="upgrades">
+
+        <h2>🚗 Taxi Upgrades</h2>
+
+        <div class="upgrade-info">
+            <span>Taxi Level</span>
+            <strong id="level">1</strong>
+        </div>
+
+        <div class="upgrade-info">
+            <span>Passenger Comfort</span>
+            <strong id="comfort">Basic</strong>
+        </div>
+
+        <div class="upgrade-info">
+            <span>Fare Bonus</span>
+            <strong>+$<span id="bonus">0</span></strong>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let money = 100;
+let rating = 1.0;
+let fuel = 100;
+
+let taxiLevel = 1;
+
+let currentPassenger = null;
+let passengerPickedUp = false;
+
+
+// ----------------------------------
+// PASSENGERS
+// ----------------------------------
+
+const passengers = [
+
+    {
+        type: "Student",
+        emoji: "🎓",
+        fare: 8,
+        requirement: "Wants a cheap ride.",
+        bonus: 3
+    },
+
+    {
+        type: "Businessperson",
+        emoji: "💼",
+        fare: 20,
+        requirement: "Needs to get there FAST!",
+        bonus: 10
+    },
+
+    {
+        type: "Elder",
+        emoji: "👵",
+        fare: 25,
+        requirement: "Wants a safe and smooth ride.",
+        bonus: 8
+    },
+
+    {
+        type: "VIP",
+        emoji: "🤑",
+        fare: 50,
+        requirement: "Expects a high-quality taxi.",
+        bonus: 25
+    },
+
+    {
+        type: "Sleepy Passenger",
+        emoji: "😴",
+        fare: 15,
+        requirement: "Wants a quiet ride.",
+        bonus: 5
+    },
+
+    {
+        type: "Influencer",
+        emoji: "📱",
+        fare: 30,
+        requirement: "Wants a fancy taxi.",
+        bonus: 12
+    },
+
+    {
+        type: "Late Passenger",
+        emoji: "🏃",
+        fare: 35,
+        requirement: "They are VERY late!",
+        bonus: 15
+    }
+
+];
+
+
+// ----------------------------------
+// DESTINATIONS
+// ----------------------------------
+
+const destinations = [
+
+    "🏠 Suburbs",
+    "🏢 Downtown",
+    "🛍️ Shopping District",
+    "✈️ Airport",
+    "🏙️ Business District"
+
+];
+
+
+// ----------------------------------
+// FIND PASSENGER
+// ----------------------------------
+
+function findPassenger() {
+
+    if (currentPassenger !== null) {
+
+        showMessage(
+            "You already have a passenger! 🚕"
+        );
+
+        return;
+    }
+
+
+    const randomPassenger =
+        passengers[
+            Math.floor(
+                Math.random() * passengers.length
+            )
+        ];
+
+
+    const randomDestination =
+        destinations[
+            Math.floor(
+                Math.random() * destinations.length
+            )
+        ];
+
+
+    currentPassenger = {
+
+        ...randomPassenger,
+
+        destination: randomDestination
+
+    };
+
+
+    passengerPickedUp = false;
+
+
+    document.getElementById("passenger").textContent =
+        currentPassenger.emoji +
+        " " +
+        currentPassenger.type;
+
+
+    document.getElementById("details").textContent =
+        currentPassenger.requirement +
+        " Destination: " +
+        currentPassenger.destination;
+
+
+    movePassenger();
+
+
+    showMessage(
+        "A passenger wants a taxi! 🚕"
+    );
+
+}
+
+
+// ----------------------------------
+// PICK UP
+// ----------------------------------
+
+function pickUpPassenger() {
+
+    if (currentPassenger === null) {
+
+        showMessage(
+            "❌ Find a passenger first!"
+        );
+
+        return;
+    }
+
+
+    if (passengerPickedUp) {
+
+        showMessage(
+            "You already picked them up!"
+        );
+
+        return;
+    }
+
+
+    if (fuel < 10) {
+
+        showMessage(
+            "⛽ You don't have enough fuel!"
+        );
+
+        return;
+    }
+
+
+    passengerPickedUp = true;
+
+
+    document.getElementById("marker").style.display =
+        "none";
+
+
+    showMessage(
+        "🚕 Passenger picked up! Now drive them to " +
+        currentPassenger.destination
+    );
+
+}
+
+
+// ----------------------------------
+// DRIVE
+// ----------------------------------
+
+function drivePassenger() {
+
+    if (currentPassenger === null) {
+
+        showMessage(
+            "❌ You don't have a passenger!"
+        );
+
+        return;
+    }
+
+
+    if (!passengerPickedUp) {
+
+        showMessage(
+            "🚕 Pick up the passenger first!"
+        );
+
+        return;
+    }
+
+
+    if (fuel < 15) {
+
+        showMessage(
+            "⛽ You're out of fuel!"
+        );
+
+        return;
+    }
+
+
+    fuel -= 15;
+
+
+    let fare =
+        currentPassenger.fare;
+
+
+    // Upgrade bonus
+
+    fare +=
+        (taxiLevel - 1) * 5;
+
+
+    let ratingChange = 0;
+
+
+    // ----------------------------------
+    // BUSINESSPERSON
+    // ----------------------------------
+
+    if (
+        currentPassenger.type ===
+        "Businessperson"
+    ) {
+
+        if (taxiLevel >= 2) {
+
+            ratingChange = 0.4;
+
+            fare += currentPassenger.bonus;
+
+            showMessage(
+                "💼 You got the businessperson there FAST! +⭐"
+            );
+
+        } else {
+
+            ratingChange = -0.2;
+
+            showMessage(
+                "🐌 The businessperson wanted a faster ride!"
+            );
+
+        }
+
+    }
+
+
+    // ----------------------------------
+    // ELDER
+    // ----------------------------------
+
+    else if (
+        currentPassenger.type ===
+        "Elder"
+    ) {
+
+        ratingChange = 0.4;
+
+        fare += currentPassenger.bonus;
+
+        showMessage(
+            "👵 You gave them a safe and smooth ride! ❤️ +⭐"
+        );
+
+    }
+
+
+    // ----------------------------------
+    // VIP
+    // ----------------------------------
+
+    else if (
+        currentPassenger.type ===
+        "VIP"
+    ) {
+
+        if (taxiLevel >= 3) {
+
+            ratingChange = 0.6;
+
+            fare += currentPassenger.bonus;
+
+            showMessage(
+                "🤑 VIP loved your upgraded taxi! HUGE TIP! 💰"
+            );
+
+        } else {
+
+            ratingChange = -0.3;
+
+            showMessage(
+                "😬 The VIP expected a better taxi!"
+            );
+
+        }
+
+    }
+
+
+    // ----------------------------------
+    // INFLUENCER
+    // ----------------------------------
+
+    else if (
+        currentPassenger.type ===
+        "Influencer"
+    ) {
+
+        if (taxiLevel >= 2) {
+
+            ratingChange = 0.4;
+
+            fare += currentPassenger.bonus;
+
+            showMessage(
+                "📱 The influencer loved your taxi!"
+            );
+
+        } else {
+
+            ratingChange = -0.2;
+
+            showMessage(
+                "📱 They said your taxi wasn't fancy enough!"
+            );
+
+        }
+
+    }
+
+
+    // ----------------------------------
+    // LATE PASSENGER
+    // ----------------------------------
+
+    else if (
+        currentPassenger.type ===
+        "Late Passenger"
+    ) {
+
+        if (taxiLevel >= 2) {
+
+            ratingChange = 0.5;
+
+            fare += currentPassenger.bonus;
+
+            showMessage(
+                "🏃 YOU GOT THEM THERE ON TIME! HUGE TIP! 💰🔥"
+            );
+
+        } else {
+
+            ratingChange = -0.3;
+
+            showMessage(
+                "😭 They were late because your taxi was too slow!"
+            );
+
+        }
+
+    }
+
+
+    // ----------------------------------
+    // STUDENT / SLEEPY
+    // ----------------------------------
+
+    else {
+
+        ratingChange = 0.2;
+
+        fare += currentPassenger.bonus;
+
+        showMessage(
+            "👍 Passenger enjoyed the ride!"
+        );
+
+    }
+
+
+    // Give money
+
+    money += fare;
+
+
+    // Change rating
+
+    rating += ratingChange;
+
+
+    // Keep rating between 1 and 5
+
+    if (rating < 1) {
+
+        rating = 1;
+
+    }
+
+
+    if (rating > 5) {
+
+        rating = 5;
+
+    }
+
+
+    // Reset passenger
+
+    currentPassenger = null;
+
+    passengerPickedUp = false;
+
+
+    document.getElementById("passenger").textContent =
+        "No passenger";
+
+
+    document.getElementById("details").textContent =
+        "Find another passenger!";
+
+
+    document.getElementById("marker").textContent =
+        "❓";
+
+
+    document.getElementById("marker").style.display =
+        "block";
+
+
+    updateDisplay();
+
+}
+
+
+// ----------------------------------
+// UPGRADE
+// ----------------------------------
+
+function upgradeTaxi() {
+
+    if (money < 100) {
+
+        showMessage(
+            "💸 You need $100 to upgrade!"
+        );
+
+        return;
+    }
+
+
+    money -= 100;
+
+    taxiLevel++;
+
+
+    showMessage(
+        "🔧 Your taxi is now Level " +
+        taxiLevel +
+        "!"
+    );
+
+
+    updateDisplay();
+
+}
+
+
+// ----------------------------------
+// REFUEL
+// ----------------------------------
+
+function refuel() {
+
+    if (money < 20) {
+
+        showMessage(
+            "💸 You need $20 to refuel!"
+        );
+
+        return;
+    }
+
+
+    if (fuel >= 100) {
+
+        showMessage(
+            "⛽ Your tank is already full!"
+        );
+
+        return;
+    }
+
+
+    money -= 20;
+
+    fuel = 100;
+
+
+    showMessage(
+        "⛽ Tank completely refilled!"
+    );
+
+
+    updateDisplay();
+
+}
+
+
+// ----------------------------------
+// MOVE TAXI
+// ----------------------------------
+
+function movePassenger() {
+
+    const taxi =
+        document.getElementById("taxi");
+
+
+    const marker =
+        document.getElementById("marker");
+
+
+    let x =
+        Math.floor(
+            Math.random() * 75
+        ) + 10;
+
+
+    let y =
+        Math.floor(
+            Math.random() * 75
+        ) + 10;
+
+
+    marker.style.left =
+        x + "%";
+
+
+    marker.style.top =
+        y + "%";
+
+
+    taxi.style.left =
+        "45%";
+
+
+    taxi.style.top =
+        "42%";
+
+}
+
+
+// ----------------------------------
+// UPDATE SCREEN
+// ----------------------------------
+
+function updateDisplay() {
+
+    document.getElementById("money").textContent =
+        Math.floor(money);
+
+
+    document.getElementById("rating").textContent =
+        rating.toFixed(1);
+
+
+    document.getElementById("fuel").textContent =
+        fuel;
+
+
+    document.getElementById("level").textContent =
+        taxiLevel;
+
+
+    document.getElementById("bonus").textContent =
+        (taxiLevel - 1) * 5;
+
+
+    if (taxiLevel === 1) {
+
+        document.getElementById("comfort").textContent =
+            "Basic";
+
+    }
+
+    else if (taxiLevel === 2) {
+
+        document.getElementById("comfort").textContent =
+            "Comfortable";
+
+    }
+
+    else if (taxiLevel >= 3) {
+
+        document.getElementById("comfort").textContent =
+            "Luxury";
+
+    }
+
+}
+
+
+// ----------------------------------
+// MESSAGE
+// ----------------------------------
+
+function showMessage(text) {
+
+    document.getElementById("message").textContent =
+        text;
+
+}
+
+
+// ----------------------------------
+// RESET
+// ----------------------------------
+
+function resetGame() {
+
+    money = 100;
+
+    rating = 1.0;
+
+    fuel = 100;
+
+    taxiLevel = 1;
+
+    currentPassenger = null;
+
+    passengerPickedUp = false;
+
+
+    document.getElementById("passenger").textContent =
+        "No passenger";
+
+
+    document.getElementById("details").textContent =
+        "Click Find Passenger to get a ride.";
+
+
+    showMessage(
+        "🔄 Game reset!"
+    );
+
+
+    updateDisplay();
+
+}
+
+
+// Start game
+
+updateDisplay();
+
+</script>
+
+</body>
+</html>
